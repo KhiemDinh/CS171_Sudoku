@@ -49,6 +49,7 @@ class BTSolver:
     """
     def forwardChecking ( self ):
         mvariables = dict()
+        isConsistent = True
 
         for v in self.network.getVariables():
 
@@ -60,20 +61,11 @@ class BTSolver:
                         n.removeValueFromDomain(v.getAssignment())
 
                         if not self.network.isConsistent():
-                            self.trail.undo()
-                            return (mvariables, False)
+                            isConsistent = False
 
-                mvariables[v] = v.getDomain()
+                        mvariables[n] = n.getDomain()
 
-        # Debugging
-        for v in mvariables.keys():
-            print(str(v))
-
-        print("----------------------------")
-
-        return (mvariables, True)
-            
-
+        return (mvariables, isConsistent)
 
 
 
