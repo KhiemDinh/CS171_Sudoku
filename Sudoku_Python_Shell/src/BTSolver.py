@@ -49,23 +49,21 @@ class BTSolver:
     """
     def forwardChecking ( self ):
         mvariables = dict()
-        isConsistent = True
 
         for v in self.network.getVariables():
+            # if the variable is assigned check its neighbors and perform constraint propagation
+            if not v.getDomain().size(): return (mvariables, False)
 
             if v.isAssigned():
                 for n in self.network.getNeighborsOfVariable(v):
-                    self.trail.push(n)
-
                     if v.getAssignment() in n.getValues():
+                        # before the neighbor is modified, push it into the trail so that we can backtrack is necessary
+                        self.trail.push(n)
                         n.removeValueFromDomain(v.getAssignment())
-
-                        if not self.network.isConsistent():
-                            isConsistent = False
-
                         mvariables[n] = n.getDomain()
 
-        return (mvariables, isConsistent)
+        # perform consistency check on the current state of the network
+        return (mvariables, self.network.isConsistent())
 
 
 
