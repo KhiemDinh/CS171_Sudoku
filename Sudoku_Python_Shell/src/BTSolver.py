@@ -48,16 +48,21 @@ class BTSolver:
                 The bool is true if assignment is consistent, false otherwise.
     """
     def forwardChecking ( self ):
+        # check if the intial state of the board is consistent
+        if not self.network.isConsistent(): return ({}, False)
+
         mvariables = dict()
 
         for v in self.network.getVariables():
-            # if the variable is assigned check its neighbors and perform constraint propagation
+            # check if the domain is consistent
             if not v.getDomain().size(): return (mvariables, False)
 
+            # if the variable is assigned check its neighbors
             if v.isAssigned():
+                # perform constraint propagation
                 for n in self.network.getNeighborsOfVariable(v):
                     if v.getAssignment() in n.getValues():
-                        # before the neighbor is modified, push it into the trail so that we can backtrack is necessary
+                        # before the neighbor is modified, push it into the trail so that we can backtrack
                         self.trail.push(n)
                         n.removeValueFromDomain(v.getAssignment())
                         mvariables[n] = n.getDomain()
