@@ -59,13 +59,18 @@ class BTSolver:
 
             # if the variable is assigned check its neighbors
             if v.isAssigned():
+
                 # perform constraint propagation
                 for n in self.network.getNeighborsOfVariable(v):
+                    
                     if v.getAssignment() in n.getValues():
                         # before the neighbor is modified, push it into the trail so that we can backtrack
                         self.trail.push(n)
                         n.removeValueFromDomain(v.getAssignment())
                         mvariables[n] = n.getDomain()
+
+                        # check if the assignment is not legal
+                        if not n.getDomain().size(): return (mvariables, False)
 
         # perform consistency check on the current state of the network
         return (mvariables, self.network.isConsistent())
