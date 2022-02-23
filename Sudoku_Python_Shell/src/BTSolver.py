@@ -139,18 +139,66 @@ class BTSolver:
         Return: The unassigned variable with the smallest domain
     """
     def getMRV ( self ):
-        return None
+        # keep track of the min domain size and its corresponding variable
+        min_domain, min_domain_variable = float('inf'), None
+
+        # iterate through all unassigned variables
+        for v in [v for v in self.network.getVariables() if not v.isAssigned()]:
+            if v.size() < min_domain:
+                min_domain, min_domain_variable = v.size(), v
+
+        return min_domain_variable
 
     """
         Part 2 TODO: Implement the Minimum Remaining Value Heuristic
                        with Degree Heuristic as a Tie Breaker
 
-        Return: The unassigned variable with the smallest domain and affecting the  most unassigned neighbors.
+        Return: The unassigned variable with the smallest domain and affecting the most unassigned neighbors.
                 If there are multiple variables that have the same smallest domain with the same number of unassigned neighbors, add them to the list of Variables.
                 If there is only one variable, return the list of size 1 containing that variable.
     """
     def MRVwithTieBreaker ( self ):
-        return None
+        # get all the unassigned variables in the constraint network
+        variables = [v for v in self.network.getVariables() if not v.isAssigned()]
+
+        # taking care of base case
+        if len(variables) < 2: return variables
+
+        # keep track of the min domain size and its corresponding variables
+        min_domain, min_domain_variables = float('inf'), []
+
+        # iterate through the unassigned variables
+        for v in variables:
+            # clear the list every time we find a variable with a smaller domain size
+            if v.size() < min_domain:
+                min_domain_variables = [v]
+                min_domain = v.size()
+
+            # add to the list every time we find a variable of the same min domain size
+            elif v.size() == min_domain:
+                min_domain_variables.append(v)
+
+        # taking care of base case
+        if len(min_domain_variables) < 2: return min_domain_variables
+
+        # keep track of the max unassigned neighbors and its corresponding variables
+        max_unassigned_neighbors, min_max_variables = float('-inf'), []
+
+        # iterate through the previously found variables with min domain size
+        for v in min_domain_variables:
+            # get the variable's number of unassigned neighbors
+            v_unassigned_neighbors = len([n for n in self.network.getNeighborsOfVariable(v) if not n.isAssigned()])
+
+            # clear the list every time we find a variable with a larger amount of unassigned neighbors
+            if v_unassigned_neighbors > max_unassigned_neighbors:
+                min_max_variables = [v]
+                max_unassigned_neighbors = v_unassigned_neighbors
+
+            # add to the list every time we find a variable with the same amount of unassigned neighbors
+            elif v_unassigned_neighbors == max_unassigned_neighbors:
+                min_max_variables.append(v)
+
+        return min_max_variables
 
     """
          Optional TODO: Implement your own advanced Variable Heuristic
