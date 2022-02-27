@@ -148,8 +148,8 @@ class BTSolver:
         min_domain, min_domain_variable = float('inf'), None
 
         # iterate through all unassigned variables
-        for v in [v for v in self.network.getVariables() if not v.isAssigned()]:
-            if v.size() < min_domain:
+        for v in self.network.getVariables():
+            if not v.isAssigned() and v.size() <= min_domain:
                 min_domain, min_domain_variable = v.size(), v
 
         return min_domain_variable
@@ -167,7 +167,8 @@ class BTSolver:
         variables = [v for v in self.network.getVariables() if not v.isAssigned()]
 
         # taking care of base case
-        if len(variables) < 2: return variables
+        if not len(variables): return [None]
+        if len(variables) == 1: return variables
 
         # keep track of the min domain size and its corresponding variables
         min_domain, min_domain_variables = float('inf'), []
@@ -184,7 +185,8 @@ class BTSolver:
                 min_domain_variables.append(v)
 
         # taking care of base case
-        if len(min_domain_variables) < 2: return min_domain_variables
+        if not len(min_domain_variables): return [None]
+        if len(min_domain_variables) == 1: return min_domain_variables
 
         # keep track of the max unassigned neighbors and its corresponding variables
         max_unassigned_neighbors, min_max_variables = float('-inf'), []
