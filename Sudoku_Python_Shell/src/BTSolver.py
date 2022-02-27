@@ -235,7 +235,20 @@ class BTSolver:
                 The LCV is first and the MCV is last
     """
     def getValuesLCVOrder ( self, v ):
-        return None
+        # get the variable's domain values
+        count_neighbors = {d:0 for d in self.getValuesInOrder(v)}
+
+        # iterate through neighbors of the variable
+        for n in self.network.getNeighborsOfVariable(v):
+            neighbors = self.getValuesInOrder(n)
+
+            # iterate through the domain values of the neighbors
+            for dv in neighbors:
+                # count each one that appears in the variable's domain
+                if dv in count_neighbors.keys():
+                    count_neighbors[dv] += 1
+        
+        return [item[0] for item in sorted(count_neighbors.items(), key=lambda x: x[1])]
 
     """
          Optional TODO: Implement your own advanced Value Heuristic
