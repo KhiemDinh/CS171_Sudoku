@@ -6,6 +6,7 @@ import Constraint
 import ConstraintNetwork
 import time
 import random
+from collections import defaultdict
 
 class BTSolver:
 
@@ -69,8 +70,8 @@ class BTSolver:
                         n.removeValueFromDomain(v.getAssignment())
                         mvariables[n] = n.getDomain()
 
-                        # check if the assignment is not legal
-                        if not n.getDomain().size(): return (mvariables, False)
+                    # check if the assignment is not legal
+                    if not n.getDomain().size(): return (mvariables, False)
 
         # perform consistency check on the current state of the network
         return (mvariables, self.network.isConsistent())
@@ -114,7 +115,62 @@ class BTSolver:
                 The bool is true if assignment is consistent, false otherwise.
     """
     def norvigCheck ( self ):
-        return ({}, False)
+        mvariables = dict()
+
+        #################### FIRST STRATEGY ####################
+
+        # check if the intial state of the board is consistent
+        if not self.network.isConsistent(): return ({}, False)
+
+        for v in self.network.getVariables():
+            # check if the domain is consistent
+            if not v.getDomain().size(): return (mvariables, False)
+
+            # if the variable is assigned check its neighbors
+            if v.isAssigned():
+
+                # perform constraint propagation
+                for n in self.network.getNeighborsOfVariable(v):
+                    
+                    if v.getAssignment() in n.getValues():
+                        # before the neighbor is modified, push it into the trail so that we can backtrack
+                        self.trail.push(n)
+                        n.removeValueFromDomain(v.getAssignment())
+
+                    # check if the assignment is not legal
+                    if not n.getDomain().size(): return (mvariables, False)
+
+                    # check if there is only one value left that is possible for the neighbor
+                    if n.getDomain().size() == 1:
+                        n.assignValue(n.getValues())
+                        mvariables[n] = n.getAssignment()
+
+        #################### SECOND STRATEGY ####################
+
+        # go through all the constraints
+        for c in self.network.getConstraints():
+            count = [0 for i in range(self.gameboard.N + 1)]
+
+            # count the values in the variables within the constraint
+            for v in c.vars:
+                for val in v.getValues():
+                    count[val] += 1
+
+            # inconsistent if any value never appears
+            if 0 in count[1:]: return (mvariables, False)
+
+            # find all variables within the constraint who only have one value and assign them that value
+            for i in range(1, self.gameboard.N + 1):
+                if count[i] == 1:
+                    for v in c.vars:
+                        if not v.isAssigned() and i in v.getValues():
+                            # before the variable is assigned, push it into the trail so that we can backtrack
+                            self.trail.push(v)
+                            v.assignValue(i)
+                            mvariables[v] = v.getAssignment()
+
+        # perform consistency check on the current state of the network
+        return (mvariables, self.network.isConsistent())
 
     """
          Optional TODO: Implement your own advanced Constraint Propagation
@@ -149,7 +205,7 @@ class BTSolver:
 
         # iterate through all unassigned variables
         for v in self.network.getVariables():
-            if not v.isAssigned() and v.size() <= min_domain:
+            if not v.isAssigned() and v.size() < min_domain:
                 min_domain, min_domain_variable = v.size(), v
 
         return min_domain_variable
